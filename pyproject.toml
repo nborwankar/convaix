@@ -17,6 +17,8 @@ dependencies = [
 [project.optional-dependencies]
 embeddings = [
     "mlx-embedding-models>=0.1.0",
+    "transformers>=4.40,<5",
+    "einops",
 ]
 providers = [
     "playwright>=1.40",
@@ -31,3 +33,8 @@ convaix = "convaix.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests that load ML models (deselect with '-m \"not slow\"')",
+]
