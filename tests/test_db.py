@@ -1,5 +1,12 @@
 import pytest
-from convaix.db import init_db, load_snapshot, list_snapshots, get_snapshot
+from convaix.db import (
+    init_db,
+    load_snapshot,
+    list_snapshots,
+    get_snapshot,
+    chunk_snapshot,
+    get_chunks,
+)
 
 
 @pytest.fixture
@@ -103,4 +110,16 @@ def test_get_snapshot(db_path):
     assert row is not None
     assert row["title"] == "Test Conversation"
     assert row["convaix_id"] == "cx_get_test"
+    conn.close()
+
+
+def test_chunk_snapshot_stores_chunks(db_path):
+    conn = init_db(db_path)
+    data = _sample_conv("cx_chunk_test")
+    load_snapshot(conn, data)
+    count = chunk_snapshot(conn, data, skip_embeddings=True)
+    assert count > 0
+    chunks = get_chunks(conn, "cx_chunk_test")
+    assert len(chunks) > 0
+    assert chunks[0]["role"] in ("user", "assistant")
     conn.close()
