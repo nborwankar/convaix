@@ -7,3 +7,10 @@ build/
 *.db
 .env
 outputs/
+
+# Internal dev process
+CLAUDE.md
+DONE.md
+NEXT_SESSION.md
+.DS_Store
+docs/plans/
