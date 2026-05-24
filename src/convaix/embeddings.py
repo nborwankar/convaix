@@ -23,20 +23,19 @@ _backend = None
 
 
 def _select_backend():
-    """Resolve the embedding backend name without loading a model."""
+    """Resolve the embedding backend name without loading a model.
+
+    'auto' resolves to sentence-transformers and deliberately does NOT import
+    MLX. A broken MLX/Metal install can abort() the process — an uncatchable
+    C-level crash, not a Python ImportError, especially once torch has
+    initialized Metal — so probing MLX by importing it is unsafe as a default.
+    Opt into MLX explicitly with CONVAIX_EMBED_BACKEND=mlx (see bug convaix-fkk).
+    """
     pref = os.environ.get("CONVAIX_EMBED_BACKEND", "auto").lower()
     if pref == "mlx":
         return "mlx"
-    if pref in ("sentence-transformers", "st"):
-        return "sentence-transformers"
-    # auto: prefer MLX, fall back to sentence-transformers on import failure
-    try:
-        import mlx_embedding_models.embedding  # noqa: F401
-
-        return "mlx"
-    except ImportError as e:
-        logger.info("MLX unavailable (%s); using sentence-transformers", e)
-        return "sentence-transformers"
+    # 'auto', 'st', 'sentence-transformers', anything else → safe ST default
+    return "sentence-transformers"
 
 
 def _load_mlx():

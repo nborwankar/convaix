@@ -36,8 +36,9 @@ def test_auto_backend_resolves(monkeypatch):
     monkeypatch.setenv("CONVAIX_EMBED_BACKEND", "auto")
     from convaix import embeddings as e
 
-    # MLX is broken in this env → auto must resolve to ST without raising
-    assert e._select_backend() in ("mlx", "sentence-transformers")
+    # auto defaults to the safe ST backend and must NOT import MLX
+    # (a broken MLX install can abort() the process) — see bug convaix-fkk
+    assert e._select_backend() == "sentence-transformers"
 
 
 def test_force_mlx_backend(monkeypatch):
