@@ -76,3 +76,36 @@ def test_add_convaix_extension():
     assert ext["conv_id"] == conv["conversation"]["id"]
     assert ext["parent_refs"] == []
     assert ext["signature"] is None
+
+
+from convaix.schema import clean_turn_text
+
+
+def test_clean_user_you_said():
+    assert clean_turn_text("You said\nHello there", "user") == "Hello there"
+
+
+def test_clean_assistant_combined_prefix():
+    assert (
+        clean_turn_text("Show thinking\nGemini said\nThe answer", "assistant")
+        == "The answer"
+    )
+
+
+def test_clean_assistant_gemini_said():
+    assert clean_turn_text("Gemini said\nHi", "assistant") == "Hi"
+
+
+def test_clean_assistant_chatgpt_said():
+    assert clean_turn_text("ChatGPT said\nResponse", "assistant") == "Response"
+
+
+def test_clean_user_attachment_prefixed():
+    assert (
+        clean_turn_text("photo.png\nPNG\nYou said\nLook at this", "user")
+        == "Look at this"
+    )
+
+
+def test_clean_noop_when_clean():
+    assert clean_turn_text("Just normal content", "assistant") == "Just normal content"

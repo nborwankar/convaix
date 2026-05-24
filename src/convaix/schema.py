@@ -39,6 +39,36 @@ def generate_convaix_id():
     return f"cx_{uuid.uuid4()}"
 
 
+def clean_turn_text(text, role):
+    """Strip provider UI artifacts from DOM-scraped turn content.
+
+    Removes (greedily, in order) Gemini/ChatGPT chrome prefixes:
+    "Show thinking\\nGemini said\\n", "Show thinking\\n", "Gemini said\\n",
+    "ChatGPT said\\n" (assistant), and "You said\\n" (user, incl.
+    attachment-prefixed "Filename\\nEXT\\nYou said\\n...").
+    """
+    text = text.strip()
+
+    if role == "user":
+        if text.startswith("You said\n"):
+            text = text[len("You said\n") :]
+        elif "\nYou said\n" in text:
+            idx = text.index("\nYou said\n")
+            text = text[idx + len("\nYou said\n") :]
+
+    if role == "assistant":
+        if text.startswith("Show thinking\nGemini said\n"):
+            text = text[len("Show thinking\nGemini said\n") :]
+        elif text.startswith("Show thinking\n"):
+            text = text[len("Show thinking\n") :]
+        elif text.startswith("Gemini said\n"):
+            text = text[len("Gemini said\n") :]
+        elif text.startswith("ChatGPT said\n"):
+            text = text[len("ChatGPT said\n") :]
+
+    return text.strip()
+
+
 def convert_to_schema(
     source,
     source_id,
