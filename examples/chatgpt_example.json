@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "conversation": {
+    "id": "conv_f9e8d7c6b5a4",
+    "title": "Python Async Patterns",
+    "source": "chatgpt",
+    "source_id": "67890abc-def0-1234-5678-abcdef012345",
+    "source_url": null,
+    "model": "gpt-4o",
+    "created_at": "2026-01-15T10:30:00Z",
+    "exported_at": "2026-02-20T14:00:00Z",
+    "tags": [
+      "python",
+      "async"
+    ],
+    "metadata": {
+      "conversation_template_id": null,
+      "gizmo_id": null,
+      "is_archived": false
+    }
+  },
+  "turns": [
+    {
+      "turn_number": 1,
+      "role": "user",
+      "content": "What's the difference between asyncio.gather and asyncio.wait?",
+      "timestamp": "2026-01-15T10:30:00Z",
+      "attachments": [],
+      "metadata": {}
+    },
+    {
+      "turn_number": 2,
+      "role": "assistant",
+      "content": "Both run multiple coroutines concurrently, but they differ in behavior:\n\n**`asyncio.gather(*coros)`**\n- Returns results in the **same order** as the input coroutines\n- If one fails, all are cancelled (with `return_exceptions=False`)\n- Simpler API for the common case\n\n```python\nresults = await asyncio.gather(fetch_a(), fetch_b(), fetch_c())\n# results[0] = fetch_a result, results[1] = fetch_b result, etc.\n```\n\n**`asyncio.wait(tasks, return_when=...)`**\n- Returns two sets: `(done, pending)`\n- More control: `FIRST_COMPLETED`, `FIRST_EXCEPTION`, `ALL_COMPLETED`\n- Tasks continue running even if one fails\n\n```python\ndone, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)\nfor task in done:\n    result = task.result()\n```\n\n**Rule of thumb**: Use `gather` when you need all results. Use `wait` when you need to react to the first completion or handle partial failures.",
+      "timestamp": "2026-01-15T10:30:05Z",
+      "attachments": [],
+      "metadata": {
+        "finish_reason": "stop",
+        "model_slug": "gpt-4o"
+      }
+    },
+    {
+      "turn_number": 3,
+      "role": "user",
+      "content": "Can you show a practical example with error handling?",
+      "timestamp": "2026-01-15T10:31:00Z",
+      "attachments": [],
+      "metadata": {}
+    },
+    {
+      "turn_number": 4,
+      "role": "assistant",
+      "content": "Here's a practical pattern for fetching multiple URLs with graceful error handling:\n\n```python\nimport asyncio\nimport aiohttp\n\nasync def fetch_url(session, url):\n    try:\n        async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:\n            return {\"url\": url, \"status\": resp.status, \"body\": await resp.text()}\n    except Exception as e:\n        return {\"url\": url, \"error\": str(e)}\n\nasync def fetch_all(urls):\n    async with aiohttp.ClientSession() as session:\n        tasks = [fetch_url(session, url) for url in urls]\n        # return_exceptions=True prevents one failure from cancelling all\n        results = await asyncio.gather(*tasks, return_exceptions=True)\n        \n        successes = [r for r in results if isinstance(r, dict) and \"body\" in r]\n        failures = [r for r in results if isinstance(r, dict) and \"error\" in r]\n        \n        print(f\"{len(successes)} succeeded, {len(failures)} failed\")\n        return results\n```\n\nThe key insight: wrapping each coroutine in its own try/except means `gather` always succeeds at the outer level, and you can inspect individual results for errors.",
+      "timestamp": "2026-01-15T10:31:08Z",
+      "attachments": [],
+      "metadata": {
+        "finish_reason": "stop",
+        "model_slug": "gpt-4o"
+      }
+    }
+  ],
+  "statistics": {
+    "turn_count": 4,
+    "user_turns": 2,
+    "assistant_turns": 2,
+    "total_chars": 2136
+  }
+}

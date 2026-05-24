@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0",
+  "conversation": {
+    "id": "conv_3c7d1e9f4a2b",
+    "title": "Designing a Vector Query Language",
+    "source": "claude",
+    "source_id": "conv_01JKLMN-opqr-stuv-wxyz-123456789abc",
+    "source_url": null,
+    "model": "claude-sonnet-4-5-20250514",
+    "created_at": "2026-02-10T09:15:00Z",
+    "exported_at": "2026-02-20T16:00:00Z",
+    "tags": [
+      "vector-search",
+      "language-design",
+      "strictRAG"
+    ],
+    "metadata": {
+      "project_uuid": "proj_vql_design",
+      "account_uuid": "acct_nborwankar"
+    }
+  },
+  "turns": [
+    {
+      "turn_number": 1,
+      "role": "user",
+      "content": "I want to design a query language for vector databases that combines semantic search with structured filtering. Think SQL meets embeddings. What are the key design decisions?",
+      "timestamp": "2026-02-10T09:15:00Z",
+      "attachments": [],
+      "metadata": {}
+    },
+    {
+      "turn_number": 2,
+      "role": "assistant",
+      "content": "There are three fundamental design decisions:\n\n**1. Query Model: Declarative vs Imperative**\n\nSQL succeeded because it's declarative — you say *what* you want, not *how* to get it. A vector query language should follow the same principle:\n\n```\n-- Declarative (good)\nSELECT documents\nWHERE semantic_similarity(content, 'machine learning') > 0.8\nAND category = 'research'\n\n-- Imperative (avoid)\nembedding = embed('machine learning')\ncandidates = ann_search(embedding, k=100)\nfiltered = filter(candidates, category='research')\n```\n\n**2. Similarity as a First-Class Predicate**\n\nIn SQL, `WHERE` clauses use exact predicates (`=`, `>`, `LIKE`). A VQL needs similarity as a native predicate type — not a function call bolted onto WHERE, but a core part of the grammar.\n\n**3. Retrieval + Reranking as Pipeline Stages**\n\nVector search is inherently two-phase: fast approximate retrieval, then precise reranking. The language should expose this:\n\n```\nRETRIEVE 100 FROM documents\n  NEAR 'machine learning'\nRERANK BY cross_encoder\nRETURN TOP 10\n```\n\nWhat's your target use case — general-purpose or domain-specific?",
+      "timestamp": "2026-02-10T09:15:12Z",
+      "attachments": [],
+      "metadata": {
+        "content_blocks": [
+          {
+            "type": "text",
+            "start_timestamp": "2026-02-10T09:15:05Z"
+          },
+          {
+            "type": "text",
+            "stop_timestamp": "2026-02-10T09:15:12Z"
+          }
+        ]
+      }
+    },
+    {
+      "turn_number": 3,
+      "role": "user",
+      "content": "Domain-specific for RAG pipelines. The key insight is that retrieval quality determines generation quality — garbage in, garbage out. I want the language to enforce retrieval discipline.",
+      "timestamp": "2026-02-10T09:16:00Z",
+      "attachments": [
+        {
+          "filename": "vql_draft_syntax.md",
+          "mime_type": "text/markdown",
+          "size_bytes": 4096,
+          "url": null
+        }
+      ],
+      "metadata": {}
+    },
+    {
+      "turn_number": 4,
+      "role": "assistant",
+      "content": "That's a strong design principle. If retrieval quality is the core constraint, then the language should make *bad retrieval hard* by default:\n\n1. **Mandatory similarity threshold** — no unbounded `TOP K` without a minimum similarity score\n2. **Explicit retrieval strategy** — force the user to declare whether they want semantic, keyword, or hybrid search\n3. **Provenance tracking** — every result carries its retrieval score and method, visible to the LLM\n\nThis is essentially what you're building with StrictRAG and VQL — the query language as a *discipline mechanism*, not just a convenience layer.",
+      "timestamp": "2026-02-10T09:16:15Z",
+      "attachments": [],
+      "metadata": {
+        "content_blocks": [
+          {
+            "type": "text",
+            "start_timestamp": "2026-02-10T09:16:08Z",
+            "stop_timestamp": "2026-02-10T09:16:15Z"
+          }
+        ]
+      }
+    }
+  ],
+  "statistics": {
+    "turn_count": 4,
+    "user_turns": 2,
+    "assistant_turns": 2,
+    "total_chars": 2065
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "conversation": {
+    "id": "conv_a1b2c3d4e5f6",
+    "title": "HNSW Parameter M Explained",
+    "source": "gemini",
+    "source_id": "fa2b7be6731420ee",
+    "source_url": "https://gemini.google.com/app/fa2b7be6731420ee",
+    "model": "gemini-2.0-flash",
+    "created_at": null,
+    "exported_at": "2026-02-11T19:25:00Z",
+    "tags": [
+      "vector-search",
+      "algorithms"
+    ],
+    "metadata": {
+      "extraction_strategy": "web-components",
+      "raw_turn_count": 4
+    }
+  },
+  "turns": [
+    {
+      "turn_number": 1,
+      "role": "user",
+      "content": "What does the M parameter control in HNSW?",
+      "timestamp": null,
+      "attachments": [],
+      "metadata": {}
+    },
+    {
+      "turn_number": 2,
+      "role": "assistant",
+      "content": "The M parameter in HNSW (Hierarchical Navigable Small World) controls the **maximum number of connections** each node can have per layer in the graph.\n\n- **Higher M** (e.g., 32-64): More connections per node. Better recall but uses more memory and slower index construction.\n- **Lower M** (e.g., 8-16): Fewer connections. Faster construction and less memory, but potentially lower recall.\n\nThe default is typically M=16, which is a good balance for most use cases.\n\nThink of it like a social network: M determines how many \"friends\" each person can have. More friends means you can reach anyone faster, but maintaining all those relationships costs more.",
+      "timestamp": null,
+      "attachments": [],
+      "metadata": {}
+    },
+    {
+      "turn_number": 3,
+      "role": "user",
+      "content": "How does M relate to ef_construction?",
+      "timestamp": null,
+      "attachments": [],
+      "metadata": {}
+    },
+    {
+      "turn_number": 4,
+      "role": "assistant",
+      "content": "Great question! They control different phases:\n\n- **M** controls the **structure** of the graph (max connections per node)\n- **ef_construction** controls the **quality of the search** during index building\n\nWhen inserting a new node, HNSW searches for its M nearest neighbors to connect to. `ef_construction` determines how thorough that search is:\n\n```\nef_construction = 100  # Consider 100 candidates to find the best M neighbors\nM = 16                 # Keep the best 16 connections\n```\n\nRule of thumb: `ef_construction >= 2 * M` for good results. Higher values give better graph quality but slower construction.",
+      "timestamp": null,
+      "attachments": [],
+      "metadata": {}
+    }
+  ],
+  "statistics": {
+    "turn_count": 4,
+    "user_turns": 2,
+    "assistant_turns": 2,
+    "total_chars": 1348
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/nborwankar/conversation-export/schema.json",
+  "title": "Universal Conversation Export",
+  "description": "A universal JSON format for exporting conversations from Gemini, ChatGPT, and Claude",
+  "type": "object",
+  "required": ["schema_version", "conversation", "turns", "statistics"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "conversation": {
+      "type": "object",
+      "required": ["id", "title", "source", "exported_at"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^conv_[a-f0-9]{12}$",
+          "description": "Stable ID generated from hash of source + source_id"
+        },
+        "title": {
+          "type": "string",
+          "description": "Conversation title (from sidebar or first user message)"
+        },
+        "source": {
+          "type": "string",
+          "enum": ["gemini", "chatgpt", "claude"],
+          "description": "Which AI provider this conversation came from"
+        },
+        "source_id": {
+          "type": ["string", "null"],
+          "description": "Provider-specific conversation ID"
+        },
+        "source_url": {
+          "type": ["string", "null"],
+          "format": "uri",
+          "description": "URL to the original conversation"
+        },
+        "model": {
+          "type": ["string", "null"],
+          "description": "Model used (e.g. gemini-2.0-flash, gpt-4, claude-3-opus)"
+        },
+        "created_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "When the conversation was created (null if unknown)"
+        },
+        "exported_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of when the export was performed"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "User-defined tags for categorization"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "default": {},
+          "description": "Provider-specific extras (extraction strategy, etc.)"
+        }
+      }
+    },
+    "turns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["turn_number", "role", "content"],
+        "properties": {
+          "turn_number": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Sequential turn number starting from 1"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["user", "assistant", "system"],
+            "description": "Normalized role (user/assistant/system)"
+          },
+          "content": {
+            "type": "string",
+            "description": "Turn content as markdown text"
+          },
+          "timestamp": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "When this turn was sent (null if unknown)"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "filename": { "type": "string" },
+                "mime_type": { "type": "string" },
+                "size_bytes": { "type": ["integer", "null"] },
+                "url": { "type": ["string", "null"] }
+              },
+              "required": ["filename"]
+            },
+            "default": [],
+            "description": "Files or images attached to this turn"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "default": {},
+            "description": "Provider-specific turn metadata"
+          }
+        }
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "required": ["turn_count", "user_turns", "assistant_turns", "total_chars"],
+      "properties": {
+        "turn_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of turns"
+        },
+        "user_turns": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of user turns"
+        },
+        "assistant_turns": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of assistant turns"
+        },
+        "total_chars": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total character count across all turns"
+        }
+      }
+    }
+  }
+}
