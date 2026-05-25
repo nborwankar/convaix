@@ -1,0 +1,48 @@
+{{vector_extension}}
+CREATE TABLE IF NOT EXISTS snapshots (
+    convaix_id    TEXT PRIMARY KEY,
+    conv_id       TEXT NOT NULL,
+    title         TEXT NOT NULL,
+    source        TEXT NOT NULL,
+    source_id     TEXT,
+    model         TEXT,
+    created_at    {{timestamp_type}},
+    published_at  {{timestamp_type}},
+    author        TEXT,
+    tags          {{array_type}},
+    raw           TEXT NOT NULL,
+    turn_count    INTEGER NOT NULL DEFAULT 0,
+    total_chars   INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_snapshots_conv_id ON snapshots(conv_id);
+CREATE INDEX IF NOT EXISTS idx_snapshots_source ON snapshots(source);
+CREATE INDEX IF NOT EXISTS idx_snapshots_author ON snapshots(author);
+CREATE TABLE IF NOT EXISTS chunks (
+    id            {{auto_id}},
+    convaix_id    TEXT NOT NULL REFERENCES snapshots(convaix_id) ON DELETE CASCADE,
+    turn_number   INTEGER NOT NULL,
+    chunk_number  INTEGER NOT NULL,
+    role          TEXT NOT NULL,
+    chunk_text    TEXT NOT NULL,
+    content_hash  TEXT NOT NULL,{{embedding_column}}
+    UNIQUE(convaix_id, turn_number, chunk_number)
+);
+{{vector_index}}
+CREATE TABLE IF NOT EXISTS discussions (
+    discussion_id TEXT PRIMARY KEY,
+    title         TEXT NOT NULL,
+    created_at    {{timestamp_type}},
+    created_by    TEXT
+);
+CREATE TABLE IF NOT EXISTS discussion_refs (
+    discussion_id TEXT NOT NULL REFERENCES discussions(discussion_id),
+    convaix_id    TEXT NOT NULL REFERENCES snapshots(convaix_id),
+    PRIMARY KEY (discussion_id, convaix_id)
+);
+CREATE TABLE IF NOT EXISTS discussion_messages (
+    id            {{auto_id}},
+    discussion_id TEXT NOT NULL REFERENCES discussions(discussion_id),
+    author        TEXT,
+    content       TEXT NOT NULL,
+    created_at    {{timestamp_type}}
+);

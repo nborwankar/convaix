@@ -37,6 +37,9 @@ convaix = "convaix.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+convaix = ["*.json", "backends/*.template"]
+
 [tool.pytest.ini_options]
 markers = [
     "slow: marks tests that load ML models (deselect with '-m \"not slow\"')",
