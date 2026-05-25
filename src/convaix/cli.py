@@ -29,11 +29,11 @@ def main():
 )
 def load(path, db, skip_embeddings):
     """Load conversation JSON files into local database."""
-    from .db import init_db, load_snapshot, chunk_snapshot
+    from .backends import open_store
     from .schema import add_convaix_extension
     from .validate import ValidationError, validate_conversation
 
-    conn = init_db(db)
+    store = open_store(db)
     loaded = 0
     skipped = 0
     errors = 0
@@ -47,6 +47,7 @@ def load(path, db, skip_embeddings):
         files.append(path)
     else:
         console.print(f"[red]Path not found: {path}[/red]")
+        store.close()
         return
 
     for filepath in files:
@@ -61,8 +62,8 @@ def load(path, db, skip_embeddings):
             if "x-convaix" not in data:
                 add_convaix_extension(data, author_handle="local")
 
-            if load_snapshot(conn, data):
-                chunk_snapshot(conn, data, skip_embeddings=skip_embeddings)
+            if store.load_snapshot(data):
+                store.chunk_and_embed(data, skip_embeddings=skip_embeddings)
                 console.print(f"  [green]Loaded[/green]: {basename}")
                 loaded += 1
             else:
@@ -71,7 +72,7 @@ def load(path, db, skip_embeddings):
             console.print(f"  [red]Error[/red]: {basename}: {e}")
             errors += 1
 
-    conn.close()
+    store.close()
 
     table = Table(title="Load Summary")
     table.add_column("Metric", style="cyan")
@@ -87,11 +88,11 @@ def load(path, db, skip_embeddings):
 @click.option("--source", "-s", help="Filter by source")
 def list_cmd(db, source):
     """List loaded conversation snapshots."""
-    from .db import init_db, list_snapshots
+    from .backends import open_store
 
-    conn = init_db(db)
-    rows = list_snapshots(conn, source=source)
-    conn.close()
+    store = open_store(db)
+    rows = store.list_snapshots(source=source)
+    store.close()
 
     if not rows:
         console.print("[yellow]No snapshots found.[/yellow]")
@@ -132,15 +133,15 @@ def list_cmd(db, source):
 )
 def search(query, db, limit, source, conv_mode):
     """Hybrid search across loaded conversations."""
-    from .db import init_db
+    from .backends import open_store
     from .search import search_chunks, search_conversations
 
     query_str = " ".join(query)
-    conn = init_db(db)
+    store = open_store(db)
 
     if conv_mode:
-        results = search_conversations(conn, query_str, source=source, limit=limit)
-        conn.close()
+        results = search_conversations(store, query_str, source=source, limit=limit)
+        store.close()
         if not results:
             console.print("[yellow]No conversations found.[/yellow]")
             return
@@ -159,8 +160,8 @@ def search(query, db, limit, source, conv_mode):
         console.print(table)
         return
 
-    results = search_chunks(conn, query_str, source=source, limit=limit)
-    conn.close()
+    results = search_chunks(store, query_str, source=source, limit=limit)
+    store.close()
 
     if not results:
         console.print("[yellow]No results found.[/yellow]")
@@ -213,11 +214,11 @@ def validate(file_path):
 @click.option("--db", default=DEFAULT_DB, help="Database path")
 def history(conv_id, db):
     """Show all snapshots of a conversation lineage."""
-    from .db import get_snapshot_history, init_db
+    from .backends import open_store
 
-    conn = init_db(db)
-    rows = get_snapshot_history(conn, conv_id)
-    conn.close()
+    store = open_store(db)
+    rows = store.get_history(conv_id)
+    store.close()
 
     if not rows:
         console.print(f"[yellow]No snapshots found for {conv_id}[/yellow]")
@@ -245,18 +246,17 @@ def history(conv_id, db):
 @click.option("--output", "-o", help="Output file path (default: stdout)")
 def export(convaix_id, db, output):
     """Export a snapshot back to JSON."""
-    from .db import get_snapshot, init_db
+    from .backends import open_store
 
-    conn = init_db(db)
-    row = get_snapshot(conn, convaix_id)
-    conn.close()
+    store = open_store(db)
+    data = store.export_snapshot(convaix_id)
+    store.close()
 
-    if not row:
+    if data is None:
         console.print(f"[red]Snapshot not found: {convaix_id}[/red]")
         raise SystemExit(1)
 
-    raw = json.loads(row["raw"])
-    formatted = json.dumps(raw, indent=2, ensure_ascii=False)
+    formatted = json.dumps(data, indent=2, ensure_ascii=False)
 
     if output:
         with open(output, "w") as f:
